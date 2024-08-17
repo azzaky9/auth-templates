@@ -44,7 +44,7 @@ export const updateUser = async (
     where: { id },
     data: {
       ...rest,
-      userJobLocation: !!locationId
+      userJobLocation: locationId
         ? {
             connect: {
               id: Number(locationId)
@@ -74,7 +74,7 @@ export const getUsers = async (includeShop?: boolean) => {
 
 export const findUserByUsername = async (
   username: string,
-  password: string
+  _password: string
 ): Promise<User | null> => {
   const user = await db.user.findUnique({
     where: {
