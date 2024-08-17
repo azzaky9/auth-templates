@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String?    @unique
+  password        String
+  name            String?
+  username        String     @unique
+  role            Role       @default(user)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  userJobLocation Shop[]
+  customers       Customer[]
+  products        Product[]
+  orders          Order[]
+  invoices        Invoice[]
+
+  @@map("users")
+}
+
+model Customer {
+  id          String    @id @default(uuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  updatedById String?
+  updatedBy   User?     @relation(fields: [updatedById], references: [id])
+  orders      Order[]
+
+  @@map("customers")
+}
+
+model Product {
+  id            Int            @id @default(autoincrement())
+  name          String
+  price         Float
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orderQuantity Int
+  updatedById   String?
+  updatedBy     User?          @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  order         ProductOrder[]
+
+  @@map("products")
+}
+
+model ProductOrder {
+  id        Int     @id @default(autoincrement())
+  orderId   String
+  quantity  Int
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("product_orders")
+}
+
+model Shop {
+  id      Int     @id @default(autoincrement())
+  name    String  @unique
+  address String
+  orders  Order[]
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("shops")
+}
+
+model Order {
+  id           String         @id @default(uuid())
+  shopId       Int
+  shop         Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  subTotal     Int
+  total        Int
+  paymentType  String         @default("cash")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  updatedById  String?
+  updatedBy    User?          @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  customerId   String
+  customer     Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productOrder ProductOrder[]
+  invoice      Invoice?
+
+  @@map("orders")
+}
+
+model Invoice {
+  id          String   @id
+  total       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+enum Role {
+  admin
+  user
+}
